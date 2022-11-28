@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <!-- Bootstrap CSS -->
-    <link
+<    <!-- Bootstrap CSS -->
+>    <link
       rel="stylesheet"
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
       integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
@@ -10,8 +10,18 @@
     />
     <title>URL - TinyApp Example</title>
   </head>
-
   <body>
+    <header>
+      <%- include('partials/_header') %>
+    </header> 
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+          <div class="navbar-nav">
+            <a class="nav-item nav-link" href="/urls">My URLs</a>
+            <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
+          </div>
+        </div>
+      </nav>
+    </header>
     <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
