@@ -12,14 +12,23 @@ app.use(cookieParser())
 const generateRandomString = () => {
   return ((Math.random() + 1)* 0x10000).toString(36).substring(6);
 }
+const findUserByEmail = (email) => {
+  for (const user in users) {
+    if (email === users[user].email){
+      return user;
+    }
+  } 
+  return null;
+};
 
 const randomName = generateRandomString()
 const users = {
   
   userRandomID: {
-    id:"userRandomID"  ,
+    id:generateRandomString()   ,
     email: "user@example.com",
     password: "purple-monkey-dinosaur",
+    
   },
   user2RandomID: {
     id: "user2RandomID",
@@ -51,17 +60,17 @@ app.listen(PORT, () => {
 //   res.send("<html><body>Hello <b>World</b></body></html>\n");
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const user = users[req.cookies["username"]]
+  const templateVars = { urls: urlDatabase, user:users[req.cookies["username"]] };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const templateVars = { urls: urlDatabase, user:users[req.cookies["username"]] };
   res.render("urls_new", templateVars);
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
   const randomName = generateRandomString()
   const newLongUrl = req.body.longURL
   if (newLongUrl.slice(0,8) === 'https://' || newLongUrl.slice(0,7) === 'http://') {
@@ -76,14 +85,13 @@ app.post("/urls", (req, res) => {
   app.get("/urls/:id", (req, res) => {   // redirect to  summary id page
     const id = req.params.id
     const longURL = urlDatabase[id]
-    const templateVars = { id, longURL, username: req.cookies["username"]};
+    const templateVars = { id, longURL, urls: urlDatabase, user:users[req.cookies["username"]] };
     res.render("urls_show", templateVars);
   });
   
   app.get("/u/:id", (req, res) => {   // redirect to actual website
     const id = req.params.id
     const longURL = urlDatabase[id]
-    console.log(longURL)
     res.redirect(longURL);
   });
   
@@ -117,14 +125,91 @@ app.post("/urls", (req, res) => {
   });
 
   app.get("/register", (req, res) => {
-    const templateVars = { username: req.cookies["username"] }
+    const templateVars = {user:null }
+    console.log(templateVars);
     res.render("urls_register", templateVars);
   });
   
-  app.post("/register", (req, res) => {    //post data for email
-    const email = req.body.email
-    const password = req.body.password
-    res.cookie('email', email)
-    res.cookie('password', password)
-    res.redirect('/register')
+  app.post("/register", (req, res) => {
+    const email = req.body.email;
+    const password = req.body.password;
+    const user_id = randomName;
+  
+    if (!email || !password) {
+      //respond with an error
+      res.send("error - please input email/password");
+    }
+    const foundUser = findUserByEmail(email);
+    if (foundUser) {
+      //respond with error email in use 
+      res.send("Email/password already exists");
+    } else {
+      const newUser = {
+        id: generateRandomString(),
+        email: email,
+        password: password
+      };
+      users[newUser.id] = newUser;
+      // console.log(users)
+      res.cookie('username', newUser.id);
+      res.redirect('/urls');
+    }
   });
+
+//   app.post('/register', (req, res) => { 
+//     const email = req.body.email;
+//     const password = req.body.password
+//     if(!email || !password) {
+//       //respond with an error
+//     }  
+
+//     //does email already exist
+
+//     const foundUser = findUserByEmail(email);
+//     if (foundUser) {
+//       //respond with an error that email is already in use
+//     }
+
+//     //create the user object, happy path
+//     const id = //generate random ID
+//     const newUser = {
+//       id: id,
+//       email: email,
+//       password: password,
+//       //make sure names are all the same
+//     }
+//     // add the new user to the users object
+//     users[id] = newUser
+//     console.log(users)
+//     //set the cookie
+//     res.cookie('user_id', id)
+//     //only need to save the user id to the cookie
+//     res.redirect('/urls')
+//   });
+
+//   app.get('/urls', (req, res) => {
+//     const userID = req.cookies.user_id"
+//   const user = users[userID];
+
+// const templateVars = {
+//   urls: urlDatabase,
+//   user: user
+// }
+
+// res.render('urls_index', templateVars);
+
+
+// <% if (user { %>
+//  <h2> You are signed in as: <5= user.email %></h2>
+// <% } %>
+
+// })
+
+
+
+//   <form method="POST" action="/register">
+//     <input name="email" />
+//     <input name="password" />
+
+//     <button type="submit">Register!</button>
+//   </form>
