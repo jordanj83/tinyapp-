@@ -1,3 +1,4 @@
+let cookieParser = require('cookie-parser')
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
@@ -5,6 +6,7 @@ const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
 //code above sets EJS as the view engine, which renders the view into html form to the browser
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser())
 
 //generates a random dtring of numbers and letters for our short url
 const generateRandomString = () => {
@@ -34,9 +36,10 @@ app.listen(PORT, () => {
 //   res.send("<html><body>Hello <b>World</b></body></html>\n");
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
   res.render("urls_index", templateVars);
 });
+
 //Express' app.get() function lets you define a route handler for GET requests to a given URL.
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
@@ -75,3 +78,24 @@ app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[shortUrl];
   res.redirect('/urls');
 });
+
+
+app.post("/urls/:id/edit", (req, res) => {
+  //req.parms.id is the path forward, its beings stored into :id
+  const shortUrl = req.params.id;
+  const newLongUrl = req.body.longUrl
+  
+  if (newLongUrl.slice(0, 8) === 'https://' || newLongUrl.slice(0, 7) === 'http://') {
+    urlDatabase[shortUrl] = newLongUrl;  // adds http: into input feild so http not manually required
+  } else {
+    urlDatabase[shortUrl] = `https://${newLongUrl}`;  // check if contains https: already
+  }
+  res.redirect('/urls');
+});
+
+app.post("/login", (req, res) => {
+  const username = req.body.username;
+  res.cookie('username', username)
+  res.redirect("/urls")
+});
+//redirects to the path that says urls
