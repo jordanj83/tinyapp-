@@ -13,6 +13,23 @@ const generateRandomString = () => {
   return ((Math.random() + 1)* 0x10000).toString(36).substring(6);
 }
 
+const randomName = generateRandomString()
+const users = {
+  
+  userRandomID: {
+    id:"userRandomID"  ,
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+
+
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -53,7 +70,7 @@ app.post("/urls", (req, res) => {
     urlDatabase[randomName] = `https://${newLongUrl}`  // check if contains http: already
   }
    // check if contains http: already
-   res.redirect(`/urls/${randomName}`)
+  res.redirect(`/urls/${randomName}`)
   });
   
   app.get("/urls/:id", (req, res) => {   // redirect to  summary id page
@@ -104,3 +121,10 @@ app.post("/urls", (req, res) => {
     res.render("urls_register", templateVars);
   });
   
+  app.post("/register", (req, res) => {    //post data for email
+    const email = req.body.email
+    const password = req.body.password
+    res.cookie('email', email)
+    res.cookie('password', password)
+    res.redirect('/register')
+  });
