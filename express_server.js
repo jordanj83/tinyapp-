@@ -17,15 +17,25 @@ const findUserByEmail = (email) => {
     if (email === users[user].email){
       return user;
     }
-  } 
-  return null;
+  }
 };
+
+
+const emptyFields = (req, res) => {
+  if (!req.body.email || !req.body.password) {
+    //respond with an error
+    res.status(400).send("400 Bad Request - ");
+    return
+  }
+}
+
+
 
 const randomName = generateRandomString()
 const users = {
   
   userRandomID: {
-    id:generateRandomString()   ,
+    id:generateRandomString(),
     email: "user@example.com",
     password: "purple-monkey-dinosaur",
     
@@ -60,13 +70,13 @@ app.listen(PORT, () => {
 //   res.send("<html><body>Hello <b>World</b></body></html>\n");
 
 app.get("/urls", (req, res) => {
-  const user = users[req.cookies["username"]]
-  const templateVars = { urls: urlDatabase, user:users[req.cookies["username"]] };
+  const user = users[req.cookies["user_id"]]
+  const templateVars = { urls: urlDatabase, user: user};
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { urls: urlDatabase, user:users[req.cookies["username"]] };
+  const templateVars = { urls: urlDatabase, user:users[req.cookies["user_id"]] };
   res.render("urls_new", templateVars);
 });
 
@@ -85,13 +95,14 @@ app.post("/urls", (req, res) => {
   app.get("/urls/:id", (req, res) => {   // redirect to  summary id page
     const id = req.params.id
     const longURL = urlDatabase[id]
-    const templateVars = { id, longURL, urls: urlDatabase, user:users[req.cookies["username"]] };
+    const templateVars = { id, longURL, urls: urlDatabase, user:users[req.cookies["user_id"]] };
     res.render("urls_show", templateVars);
   });
   
   app.get("/u/:id", (req, res) => {   // redirect to actual website
     const id = req.params.id
     const longURL = urlDatabase[id]
+
     res.redirect(longURL);
   });
   
@@ -113,15 +124,30 @@ app.post("/urls", (req, res) => {
     res.redirect('/urls');
   });
   
-  app.post("/login", (req, res) => {   
-    const username = req.body.username;
-    res.cookie('username', username)
+  app.post("/login", (req, res) => {
+    const email = req.body.email;
+    const password = req.body.password;
+    let userId = findUserByEmail(email); 
+    emptyFields(req, res)
+    if (!userId) {
+      return res.status(400).send("User not found!")
+    }
+    if (password !== users[userId].password) {
+      return res.status(400).send("Incorrect password")
+    }
+    
+    const cookieObj = {
+      email,
+      password,
+      id: userId
+    }
+    res.cookie('user_id', cookieObj)
     res.redirect('/urls')
   });
   
   app.post("/logout", (req, res) => {   
     res.clearCookie("username")
-    res.redirect('/urls')
+    res.redirect('/login')
   });
 
   app.get("/register", (req, res) => {
@@ -129,20 +155,26 @@ app.post("/urls", (req, res) => {
     console.log(templateVars);
     res.render("urls_register", templateVars);
   });
-  
+
+
+
+  app.get("/login", (req, res) => {
+    const user = req.body.email;
+    const templateVars = { user }
+    res.render("login", templateVars);
+  });
+
+
   app.post("/register", (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
     const user_id = randomName;
-  
-    if (!email || !password) {
-      //respond with an error
-      res.send("error - please input email/password");
-    }
     const foundUser = findUserByEmail(email);
+
+    emptyFields(req, res)
     if (foundUser) {
       //respond with error email in use 
-      res.send("Email/password already exists");
+      res.status(400).send("400 User Already in Database");
     } else {
       const newUser = {
         id: generateRandomString(),
@@ -150,8 +182,7 @@ app.post("/urls", (req, res) => {
         password: password
       };
       users[newUser.id] = newUser;
-      // console.log(users)
-      res.cookie('username', newUser.id);
+      res.cookie('user_id', newUser);
       res.redirect('/urls');
     }
   });
