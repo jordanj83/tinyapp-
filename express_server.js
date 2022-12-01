@@ -30,7 +30,6 @@ const emptyFields = (req, res) => {
 }
 
 
-
 const randomName = generateRandomString()
 const users = {
   
@@ -48,11 +47,34 @@ const users = {
 };
 
 
-
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+
+
+const loggedIn = (req) => {
+  if (!req.cookies.user) {
+    return false;
+  }
+
+  const emailCookie = req.cookies.user.email;
+  const passwordCookie = req.cookies.user.password;
+
+  if (!findUserByEmail(emailCookie)) {
+    return false;
+  }
+
+  const userID = findUserByEmail(emailCookie);
+
+  if (users[userID].password !== passwordCookie) {
+    return false;
+  }
+
+  return true;
+};
+
+
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -76,11 +98,17 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    return res.redirect("/login")
+  }
   const templateVars = { urls: urlDatabase, user:users[req.cookies["user_id"]] };
   res.render("urls_new", templateVars);
 });
 
 app.post("/urls", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    return res.send("Hey you cant do it, you're not logged in.")
+  }
   const randomName = generateRandomString()
   const newLongUrl = req.body.longURL
   if (newLongUrl.slice(0,8) === 'https://' || newLongUrl.slice(0,7) === 'http://') {
@@ -99,8 +127,11 @@ app.post("/urls", (req, res) => {
     res.render("urls_show", templateVars);
   });
   
-  app.get("/u/:id", (req, res) => {   // redirect to actual website
+  app.get("/u/:id", (req, res) => {   
     const id = req.params.id
+    if(!urlDatabase[id]) {
+      return res.send("this url does not exist")
+    }
     const longURL = urlDatabase[id]
 
     res.redirect(longURL);
@@ -153,6 +184,9 @@ app.post("/urls", (req, res) => {
   app.get("/register", (req, res) => {
     const templateVars = {user:null }
     console.log(templateVars);
+    if (loggedIn(req)) {
+      return res.redirect('/urls');
+    }
     res.render("urls_register", templateVars);
   });
 
@@ -161,8 +195,15 @@ app.post("/urls", (req, res) => {
   app.get("/login", (req, res) => {
     const user = req.body.email;
     const templateVars = { user }
+    if (loggedIn(req)) {
+      return res.redirect('/urls');
+    }
+  
     res.render("login", templateVars);
   });
+
+  
+
 
 
   app.post("/register", (req, res) => {
@@ -186,61 +227,3 @@ app.post("/urls", (req, res) => {
       res.redirect('/urls');
     }
   });
-
-//   app.post('/register', (req, res) => { 
-//     const email = req.body.email;
-//     const password = req.body.password
-//     if(!email || !password) {
-//       //respond with an error
-//     }  
-
-//     //does email already exist
-
-//     const foundUser = findUserByEmail(email);
-//     if (foundUser) {
-//       //respond with an error that email is already in use
-//     }
-
-//     //create the user object, happy path
-//     const id = //generate random ID
-//     const newUser = {
-//       id: id,
-//       email: email,
-//       password: password,
-//       //make sure names are all the same
-//     }
-//     // add the new user to the users object
-//     users[id] = newUser
-//     console.log(users)
-//     //set the cookie
-//     res.cookie('user_id', id)
-//     //only need to save the user id to the cookie
-//     res.redirect('/urls')
-//   });
-
-//   app.get('/urls', (req, res) => {
-//     const userID = req.cookies.user_id"
-//   const user = users[userID];
-
-// const templateVars = {
-//   urls: urlDatabase,
-//   user: user
-// }
-
-// res.render('urls_index', templateVars);
-
-
-// <% if (user { %>
-//  <h2> You are signed in as: <5= user.email %></h2>
-// <% } %>
-
-// })
-
-
-
-//   <form method="POST" action="/register">
-//     <input name="email" />
-//     <input name="password" />
-
-//     <button type="submit">Register!</button>
-//   </form>
