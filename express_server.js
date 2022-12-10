@@ -195,13 +195,14 @@ app.post("/urls/:id/edit", (req, res) => {
   if (!req.session.user_id) {
     return res.status(400).send("Sorry you need to log in to edit");
   }
-  if(!res.body){
+  if(!req.body){
     return res.status(400).send("invalid web address.")
   }
   if (
     newLongUrl.slice(0, 8) === "https://" ||
     newLongUrl.slice(0, 7) === "http://"
-  ) {
+  ) 
+  {
     urlDatabase[shortUrl] = {
       longURL: newLongUrl,
       userID: req.session.user_id.id,
@@ -237,7 +238,7 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  req.session.user_id = null;
+  req.session = null;
   res.redirect("/login");
 });
 
