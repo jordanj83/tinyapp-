@@ -13,7 +13,7 @@ const findUserByEmail = (email, users) => {
 const emptyFields = (req, res) => {
   if (!req.body.email || !req.body.password) {
     res.status(400).send("400 Bad Request - ");
-    return;
+    return true;
   }
 };
 

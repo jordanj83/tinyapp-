@@ -93,7 +93,7 @@ app.get("/urls/new", (req, res) => {
 
 app.post("/urls", (req, res) => {
   if (!req.session.user_id) {
-    return res.send("Sorry, only logged in users can have shorted URLs");
+    return res.status(401).send("Sorry, only logged in users can have shorted URLs");
   }
   const randomName = generateRandomString();
   const newLongUrl = req.body.longURL;
@@ -150,7 +150,7 @@ app.get("/urls/:id", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
-  if (!urlDatabase[id].longURL) {
+  if (!urlDatabase[id]) {
     return res.send("this url does not exist");
   }
   const longURL = urlDatabase[id].longURL;
@@ -187,7 +187,7 @@ app.post("/urls/:id/delete", (req, res) => {
   res.redirect("/urls");
 });
 
-app.post("/urls/:id/edit", (req, res) => {
+app.post("/urls/:id/", (req, res) => {
   const shortUrl = req.params.id;
   const newLongUrl = req.body.longUrl;
   
@@ -265,7 +265,9 @@ app.post("/register", (req, res) => {
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
   const user_id = generateRandomString();
-  emptyFields(req, res);
+  if(emptyFields(req, res))
+  {return};
+
   const foundUser = findUserByEmail(email, users);
   if (foundUser) {
 
